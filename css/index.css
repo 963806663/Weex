@@ -1,0 +1,266 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "微软雅黑";
+  font-size: 0.14rem;
+}
+ul,
+li {
+  list-style: none;
+}
+a {
+  text-decoration: none;
+}
+::-webkit-scrollbar {
+  display: none;
+}
+.full-w {
+  width: 100%;
+}
+.full-h {
+  height: 100%;
+}
+.full {
+  width: 100%;
+  height: 100%;
+}
+.flex {
+  display: -webkit-box;
+  /* 老版本语法: Safari, iOS, Android browser, older WebKit browsers. */
+  display: -moz-box;
+  /* 老版本语法: Firefox (buggy) */
+  display: -ms-flexbox;
+  /* 混合版本语法: IE 10 */
+  display: -webkit-flex;
+  /* 新版本语法: Chrome 21+ */
+  display: flex;
+  /* 新版本语法: Opera 12.1, Firefox 22+ */
+}
+.flex1 {
+  -webkit-box-flex: 1;
+  /* OLD - iOS 6-, Safari 3.1-6 */
+  -moz-box-flex: 1;
+  /* OLD - Firefox 19- */
+  -webkit-flex: 1;
+  /* Chrome */
+  -ms-flex: 1;
+  /* IE 10 */
+  flex: 1;
+  /* NEW, Spec - Opera 12.1, Firefox 20+ */
+}
+html,
+body {
+  width: 100%;
+  height: 100%;
+  font-size: 0.16rem;
+}
+.wrap {
+  width: 100%;
+  height: 100%;
+  display: -webkit-box;
+  /* 老版本语法: Safari, iOS, Android browser, older WebKit browsers. */
+  display: -moz-box;
+  /* 老版本语法: Firefox (buggy) */
+  display: -ms-flexbox;
+  /* 混合版本语法: IE 10 */
+  display: -webkit-flex;
+  /* 新版本语法: Chrome 21+ */
+  display: flex;
+  /* 新版本语法: Opera 12.1, Firefox 22+ */
+  flex-direction: column;
+}
+.wrap header {
+  width: 100%;
+  height: 0.45rem;
+  background: #010101;
+  color: #ffffff;
+  display: -webkit-box;
+  /* 老版本语法: Safari, iOS, Android browser, older WebKit browsers. */
+  display: -moz-box;
+  /* 老版本语法: Firefox (buggy) */
+  display: -ms-flexbox;
+  /* 混合版本语法: IE 10 */
+  display: -webkit-flex;
+  /* 新版本语法: Chrome 21+ */
+  display: flex;
+  /* 新版本语法: Opera 12.1, Firefox 22+ */
+  justify-content: space-between;
+  padding: 0 0.17rem;
+  align-items: center;
+}
+.wrap header select {
+  background: #010101;
+  border: 1px solid #7b7c80;
+  color: #ffffff;
+  outline: none;
+  padding: 0.05rem;
+}
+.wrap .content {
+  height: 100%;
+  overflow-x: hidden;
+  background: #090909;
+  color: #ffffff;
+  overflow-y: scroll;
+}
+.wrap .content > div:nth-child(1) {
+  height: 0.6rem;
+  display: -webkit-box;
+  /* 老版本语法: Safari, iOS, Android browser, older WebKit browsers. */
+  display: -moz-box;
+  /* 老版本语法: Firefox (buggy) */
+  display: -ms-flexbox;
+  /* 混合版本语法: IE 10 */
+  display: -webkit-flex;
+  /* 新版本语法: Chrome 21+ */
+  display: flex;
+  /* 新版本语法: Opera 12.1, Firefox 22+ */
+}
+.wrap .content > div:nth-child(1) #nowPrice {
+  font-size: 0.2rem;
+  color: red;
+}
+.wrap .content > div:nth-child(1) > div:nth-child(1) {
+  width: 1.1rem;
+  text-align: center;
+  line-height: 0.6rem;
+}
+.wrap .content > div:nth-child(1) > ul {
+  -webkit-box-flex: 1;
+  /* OLD - iOS 6-, Safari 3.1-6 */
+  -moz-box-flex: 1;
+  /* OLD - Firefox 19- */
+  -webkit-flex: 1;
+  /* Chrome */
+  -ms-flex: 1;
+  /* IE 10 */
+  flex: 1;
+  /* NEW, Spec - Opera 12.1, Firefox 20+ */
+  font-size: 0.14rem;
+}
+.wrap .content > div:nth-child(1) > ul li {
+  height: 50%;
+  display: -webkit-box;
+  /* 老版本语法: Safari, iOS, Android browser, older WebKit browsers. */
+  display: -moz-box;
+  /* 老版本语法: Firefox (buggy) */
+  display: -ms-flexbox;
+  /* 混合版本语法: IE 10 */
+  display: -webkit-flex;
+  /* 新版本语法: Chrome 21+ */
+  display: flex;
+  /* 新版本语法: Opera 12.1, Firefox 22+ */
+}
+.wrap .content > div:nth-child(1) > ul li p {
+  -webkit-box-flex: 1;
+  /* OLD - iOS 6-, Safari 3.1-6 */
+  -moz-box-flex: 1;
+  /* OLD - Firefox 19- */
+  -webkit-flex: 1;
+  /* Chrome */
+  -ms-flex: 1;
+  /* IE 10 */
+  flex: 1;
+  /* NEW, Spec - Opera 12.1, Firefox 20+ */
+  line-height: 0.3rem;
+  color: #646d7c;
+}
+.wrap .content > div:nth-child(1) > ul li p span {
+  color: #f9feff;
+}
+.wrap .content > div:nth-child(1) > ul li p select {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: #090909;
+  color: #ffffff;
+  padding-left: 0.2rem;
+}
+.wrap .content > div:nth-child(1) > ul li #zbBtn {
+  font-size: 0.14rem;
+  text-align: center;
+  color: #1a85d7;
+  background: #090909;
+}
+.wrap .content #indexBox {
+  width: 100%;
+  position: absolute;
+  z-index: 5;
+  background: #090909;
+}
+.wrap .content #indexBox .img {
+  width: 100%;
+  display: -webkit-box;
+  /* 老版本语法: Safari, iOS, Android browser, older WebKit browsers. */
+  display: -moz-box;
+  /* 老版本语法: Firefox (buggy) */
+  display: -ms-flexbox;
+  /* 混合版本语法: IE 10 */
+  display: -webkit-flex;
+  /* 新版本语法: Chrome 21+ */
+  display: flex;
+  /* 新版本语法: Opera 12.1, Firefox 22+ */
+  display: none;
+  font-size: 0.1rem;
+}
+.wrap .content #indexBox .img p {
+  -webkit-box-flex: 1;
+  /* OLD - iOS 6-, Safari 3.1-6 */
+  -moz-box-flex: 1;
+  /* OLD - Firefox 19- */
+  -webkit-flex: 1;
+  /* Chrome */
+  -ms-flex: 1;
+  /* IE 10 */
+  flex: 1;
+  /* NEW, Spec - Opera 12.1, Firefox 20+ */
+  padding: 0.05rem;
+  text-align: center;
+}
+.wrap .content .series {
+  padding: 0;
+  height: 0.16rem;
+  font-size: 0.12rem;
+  padding-left: 1em;
+}
+.wrap .content .series span {
+  font-size: 0.12rem;
+  color: #646d7c;
+}
+.wrap footer {
+  width: 100%;
+  display: -webkit-box;
+  /* 老版本语法: Safari, iOS, Android browser, older WebKit browsers. */
+  display: -moz-box;
+  /* 老版本语法: Firefox (buggy) */
+  display: -ms-flexbox;
+  /* 混合版本语法: IE 10 */
+  display: -webkit-flex;
+  /* 新版本语法: Chrome 21+ */
+  display: flex;
+  /* 新版本语法: Opera 12.1, Firefox 22+ */
+  color: #ffffff;
+  font-weight: 900;
+  height: 0.45rem;
+}
+.wrap footer > div {
+  -webkit-box-flex: 1;
+  /* OLD - iOS 6-, Safari 3.1-6 */
+  -moz-box-flex: 1;
+  /* OLD - Firefox 19- */
+  -webkit-flex: 1;
+  /* Chrome */
+  -ms-flex: 1;
+  /* IE 10 */
+  flex: 1;
+  /* NEW, Spec - Opera 12.1, Firefox 20+ */
+  text-align: center;
+  line-height: 0.4rem;
+}
+.wrap footer > div:nth-child(1) {
+  background: #009900;
+}
+.wrap footer > div:nth-child(2) {
+  background: #e91010;
+}

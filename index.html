@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weex</title>
+    <meta name = "viewport" content = "width = device-width, initial-scale = 1.0, maximum-scale = 1.0, user-scalable = 0" />
+    <script src="js/rem.js"></script>
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/iconfont.css">
+    <script src="js/jquery-3.1.1.min.js"></script>
+    <script src="code/highstock.js"></script>
+    <script src="code/indicators/indicators.js"></script>
+    <script src="code/indicators/macd.src.js"></script>
+    <script src="code/indicators/ema.src.js"></script>
+</head>
+<body>
+    <div class="wrap">
+        <header>
+            <div id="sss"><i class="iconfont icon-left"></i>返回</div>
+            <select name="sel" id="sel">
+                <option value="">BTC vs USD</option>
+            </select>
+            <div><i class="iconfont icon-full"></i></div>
+        </header>
+        <div class="content">
+            <div>
+                <div id="nowPrice"></div>
+                <ul>
+                    <li>
+                        <p>幅 <span id="range"></span></p>
+                        <p>低 <span id="lowest"></span></p>
+                        <p>
+                            <select name="" id="fsSel">
+                                <option value="1">1分</option>
+                                <option value="3">3分</option>
+                                <option value="5">5分</option>
+                                <option value="15">15分</option>
+                            </select>
+                        </p>
+                    </li>
+                    <li>
+                        <p>量<span id="volume"></span></p>
+                        <p>高 <span id="highest"></span></p>
+                        <p id="zbBtn">指标</p>
+                    </li>
+                </ul>
+            </div>
+            <div id="indexBox">
+                <div class="img">
+                    <p>主图</p>
+                    <p>MA</p>
+                    <p>EMA</p>
+                    <p>BOLL</p>
+                    <p>关闭</p>
+                </div>
+                <div class="img">
+                    <p>副图</p>
+                    <p>MACD</p>
+                    <p>KDJ</p>
+                    <p>RSI</p>
+                    <p>关闭</p>
+                </div>
+            </div>
+            <div class="series">
+                <span id="date" style="margin-right: 10px"></span>
+                <span id="colnum"></span>
+            </div>
+            <div id="series" class="series"></div>
+            <div id="container" style="width:100%;height:80%;margin-bottom: 10px"></div>
+        </div>
+        <footer>
+            <div>买入</div>
+            <div>卖出</div>
+        </footer>
+    </div>
+    <script>
+        //点击指标打开和关闭指标选项
+        $("#zbBtn").click(function(){
+            if($(".img").css("display") === "none"){
+                $(".img").css("display","flex");
+            } else{
+                $(".img").css("display","none");
+            }
+        });
+
+        //如果选择的时间
+        $("#fsSel").change(function () {
+            min = Number($("#fsSel").val());
+            btnnum = buttons.indexof(min);
+            market_data = [];
+            transaction =[];
+            getHistoryData();
+        });
+
+        //显示范围
+        var btnnum = 0;
+        var buttons = [1,3,5,15];
+        buttons.indexof = function(value) {
+            var a = this;
+            for (var i = 0; i < a.length; i++) {
+                if (a[i] == value)
+                    return i;
+            }
+        };
+
+        //要请求的webSocket地址
+        var wsUrl ="wss://ws.weex.com/";
+
+        //当前价格
+        var nowPrice =  $("#nowPrice");
+
+        //涨跌幅
+        var container = $("#range");
+
+        //今日最高
+        var highest = $("#highest");
+
+        //今日最低
+        var lowest = $("#lowest");
+
+        //24小时成交量
+        var volume = $("#volume");
+
+        //最近的一次价格
+        var lastPrice = 0;
+
+        //K线图时间
+        var min =  1;
+
+        //行情价格数据
+        var market_data = [];
+
+        //行情交易量数据
+        var transaction =[];
+
+        //当前时间
+        var nowTime = null;
+
+        //昨日收盘价格
+        var old_last = null;
+
+        //图标的实例对象
+        var chart = null;
+
+        //跟新数据
+        function addition() {
+            var series = chart.series[0];
+            var series1 = chart.series[1];
+            series.setData(market_data);
+            series1.setData(transaction);
+            series.setData(market_data);
+        }
+
+
+
+        //获取最新市场统计情况(包含昨日价格)
+        function statistics() {
+            $.ajax(
+                {
+                    url: "https://wwwapp.weex.com:8443/exchange/v1/market/app/status",
+                    type: "get",
+                    dataType: "JSON",
+                    data: {
+                        "params": [
+                            "BTCUSD"
+                        ]
+                    },
+                    success: function (result) {
+                        console.log(result.data);
+                        for(var i = 0;i < result.data.length;i++){
+                            if(result.data[i].market === "BTCUSD"){
+                                old_last =  result.data[i].old_last;
+                            }
+                        }
+                    },
+                    error: function () {
+                        alert("error");
+                    }
+                });
+        }
+//        statistics();
+
+
+
+        //公用的包含webSocket请求的方法
+        function runWebsocket(url,data,func) {
+            var websocket = new WebSocket(url);
+            websocket.onopen = function(evt) {
+                var s_obj = data;
+                var s_json = JSON.stringify(s_obj);
+                websocket.send(s_json);
+            };
+            websocket.onmessage = function(evt) {
+                func(evt);
+            };
+            websocket.onclose = function(evt) {};
+            websocket.onerror = function(evt) {};
+        }
+
+
+
+        //当前价格订阅
+        function getNowPrice(){
+            var url = wsUrl;
+            var data = {
+                "params": [
+                    "BTCUSD",
+                    "BTCCNY"
+                ],
+                "method": "price.subscribe",
+                "id": 1000
+            };
+            function func(evt) {
+                var data = JSON.parse(evt.data);
+                if(data.params){
+                    var price = Number(data.params[1]);
+                    if(price > lastPrice){
+                        nowPrice.css("color","green")
+                    } else{
+                        nowPrice.css("color","red")
+                    }
+                    nowPrice.html(price);
+
+                    //涨跌幅
+                    if(lastPrice !== 0){
+                        var range = (price - lastPrice)/lastPrice;
+                        range = (range*100).toFixed(2);
+                        if(range > 0){
+                            container.css("color","green");
+                            range = "+" + range + "%"
+                        } else if(range == 0){
+                            container.css("color","green");
+                            range = range + "%"
+                        } else {
+                            container.css("color","red");
+                            range = range + "%"
+                        }
+                        container.html(range);
+                    } else{
+                        container.css("color","green");
+                        container.html("+0.00%")
+                    }
+
+                    lastPrice = price;
+                }
+            }
+            runWebsocket(url,data,func);
+        }
+        getNowPrice();
+
+
+
+
+        //当日行情订阅
+        function getToday(){
+            var url = wsUrl;
+            var data = {
+                "params": [
+                    "BTCUSD"
+                ],
+                "method": "today.subscribe",
+                "id": 1000
+            };
+            function func(evt) {
+                var data = JSON.parse(evt.data);
+                if(data.params){
+                    var todayData = data.params[1];
+                    //当日最高
+                    highest.html(todayData.high);
+                    //当日最低
+                    lowest.html(todayData.low);
+                    //24小时成交量
+                    volume.html(todayData.volume)
+                }
+            }
+            runWebsocket(url,data,func);
+        }
+        getToday();
+
+
+
+
+        //获取当前时间
+        function getNowTime() {
+            var url = wsUrl;
+            var data = {
+                "params": [],
+                "method": "server.time",
+                "id": 1000
+            };
+            function func(evt) {
+                var data = JSON.parse(evt.data);
+                nowTime = data.result;
+            }
+            runWebsocket(url,data,func);
+        }
+        getNowTime();
+
+
+
+
+        //K线行情查询(历史记录)
+        function getHistoryData() {
+            var url = wsUrl;
+            var websocket = new WebSocket(url);
+            websocket.onopen = function(evt) {
+                var s_obj = {
+                    "params": [
+                        "BTCUSD",
+                        nowTime - 60*60*12,
+                        nowTime,
+                        60 * min
+                    ],
+                    "method": "kline.query",
+                    "id": 1000
+                };
+                var s_json = JSON.stringify(s_obj);
+                websocket.send(s_json);
+            };
+            websocket.onclose = function(evt) {};
+            websocket.onmessage = function(evt) {
+                var data = JSON.parse(evt.data);
+                if(data.result){
+                    re_data(data);
+                    runchart(market_data);
+                    getNowData();
+                }
+            };
+            websocket.onerror = function(evt) {};
+        }
+        getHistoryData();
+
+
+
+
+        //k线行情订阅(实时刷新)
+        function getNowData(){
+            var url = wsUrl;
+            var data = {
+                "params": [
+                    "BTCUSD",
+                    60 * min
+                ],
+                "method": "kline.subscribe",
+                "id": 1
+            };
+            function func(evt) {
+                var data = JSON.parse(evt.data);
+                if(data.params){
+                    re_data(data);
+                    addition();
+                }
+            }
+            runWebsocket(url,data,func);
+        }
+
+
+        //转换数据格式
+        var lastTime = 0;
+        function re_data(data) {
+            var array = [];
+            if(data.result){
+                array = data.result;
+            } else{
+                array = data.params;
+            }
+            for(var i = 0;i < array.length; i++){
+                var arr = [];
+                var arr2 = {};
+                var close = null;
+                for(var j = 0; j < array[i].length-1; j++){
+                    var that = array[i][j];
+                    if(typeof that === "string"){
+                        if(j < 5 && j !== 2){
+                            arr.push(Number(that));
+                        }
+                        if(j === 2){
+                            close = that;
+                        }
+                        if(j === 0 || j === 5){
+                            arr2.y = Number(that);
+                        }
+                    } else{
+                        arr.push(that * 1000);
+                        arr2.x = that * 1000;
+                    }
+                }
+                arr.push(Number(close));
+                //根据开盘价和收盘价的大小 改变column的颜色
+                if(transaction.length){
+                    arr2.color = arr[1] < arr[4] ? "#02e379" : "red";
+                }
+                //如果交易量和价格不为零
+                if(lastTime === arr[0]){
+                    market_data[market_data.length-1] = arr;
+                    transaction[transaction.length-1] = arr2;
+                } else if(JSON.stringify(arr2) !== "{}" !== 0 && arr2.y !== 0){
+                    market_data.push(arr);
+                    transaction.push(arr2);
+                }
+            }
+            //保存上次最新数据的时间
+            lastTime = market_data[market_data.length-1][0];
+        }
+
+
+
+        //highStock全局配置
+        Highcharts.setOptions({
+            global: {
+                useUTC: false
+            },
+            lang: {
+                rangeSelectorZoom: '',
+                months : [ '一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月' ],
+                shortMonths : [ '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月',
+                    '9月', '10月', '11月', '12月' ],
+                weekdays : [ '周日', '周一', '周二', '周三', '周四', '周五', '周六' ]
+            }
+        });
+
+
+        //绘图
+        function runchart() {
+            chart = Highcharts.stockChart('container', {
+                //图标配置
+                chart:{
+                    backgroundColor:"#090909",
+                    alignTicks: true,
+                    animation:false,
+                    spacing:[0, 5, 0, 5],
+                    zoomType:'xy',
+                    resetZoomButton:{
+                        theme:{
+                            display:"none"
+                        }
+                    },
+                    style: {
+                        fontFamily: '微软雅黑'
+                    }
+                },
+
+
+                //数据列配置
+                plotOptions: {
+                    candlestick: {
+                        // 控制走势为跌的蜡烛颜色
+                        color: 'red',
+                        lineColor: 'red',
+                        // 控制走势为涨的蜡烛颜色
+                        upColor: '#02e379',
+                        upLineColor: '#02e379'
+                    },
+                    column:{
+                        color:'red'
+                    },
+                    macd:{
+                        color:"#02e379",
+                        negativeColor:"red"
+                    },
+                    series: {
+                        animation:true,
+                        lineWidth:0.5,
+                        borderWidth: 0
+                    }
+                },
+
+
+                //x轴配置
+                xAxis:{
+                    //十字线
+                    crosshair: {
+                        width: 0.5,
+                        color: '#8a8a8a',
+                        zIndex:5
+                    },
+                    labels:{
+                        useHTML: false
+                    },
+                    //刻度线
+                    tickPixelInterval: 60,
+                    tickColor: "#666666",
+                    tickLength: 5,
+                    //轴线
+                    lineColor: '#404040',
+                    lineWidth: 1
+                },
+
+
+                //y轴划分
+                yAxis: [
+                    {
+                        height: '50%',
+                        resize: {
+                            enabled: false
+                        },
+                        labels: {
+                            align: 'left',
+                            format: '${value:.2f}',
+                            x:2,
+                            y:5,
+                            useHTML: true
+                        },
+                        //十字准星线
+                        crosshair: {
+                            width: 0.5,
+                            color: '#8a8a8a',
+                            snap:true,
+                            label: {
+                                enabled:true,
+                                backgroundColor: "#090909",
+                                borderColor:"#ffff1c",
+                                borderWidth: 0.5,
+                                format: '${value:.2f}',
+                                padding:3,
+                                style:{
+                                    "color": "#ffff1c",
+                                    "fontWeight": "500",
+                                    "fontSize": "11px"
+                                }
+                            }
+                        },
+                        //网格线
+                        gridLineColor: "#2f2f2f",
+                        gridLineDashStyle: "shortDot",
+                        gridLineWidth: 0.5,
+                        //轴线
+                        lineColor: '#404040',
+                        lineWidth: 0.5,
+                        //偏移
+                        offset:0
+                    },
+                    {
+                        top: '50%',
+                        height: '25%',
+                        labels: {
+                            align: 'left',
+                            y:5,
+                            useHTML: true
+                        },
+                        //网格线
+                        gridLineColor: "#2f2f2f",
+                        gridLineDashStyle: "shortDot",
+                        gridLineWidth: 0.5,
+                        //轴线
+                        lineColor: '#404040',
+                        lineWidth: 0.5,
+                        //偏移
+                        offset:0
+                    },
+                    {
+                        top: '75%',
+                        height: '25%',
+                        labels: {
+                            align: 'left',
+                            y:5,
+                            useHTML: true
+                        },
+                        gridLineColor: "#2f2f2f",
+                        gridLineDashStyle: "shortDot",
+                        //轴线
+                        lineColor: '#404040',
+                        lineWidth: 0.5,
+                        //偏移
+                        offset:0
+                    }
+                ],
+
+
+                //线
+                series: [
+                    {
+                        type: 'candlestick',
+                        id: 'candlestick_series',
+                        name: '价格',
+                        data: market_data,
+                        yAxis: 0,
+                        tooltip:{
+                            pointFormatter: function () {
+                                $("#series").html("<span>开"+this.open.toFixed(2)+"</span> <span>高"+this.high.toFixed(2)+"</span> <span>低"+this.low.toFixed(2)+"</span> <span>收"+this.close.toFixed(2)+"</span>")
+                            }
+                        }
+                    },
+                    {
+                        type: 'column',
+                        id:"column_series",
+                        name:"成交量",
+                        data:transaction,
+                        yAxis: 1,
+                        tooltip:{
+                            pointFormatter: function () {
+                                var newDate = new Date();
+                                newDate.setTime(this.x);
+                                var date = newDate.getFullYear()+"-"+(newDate.getMonth()+1)+"-"+newDate.getDate()+" "+ newDate.getHours()+":"+newDate.getMinutes();
+                                $("#date").html(date);
+                                $("#colnum").html("交易量 "+this.y.toFixed(2));
+                            },
+                            style:{
+                                display:"none"
+                            }
+                        }
+                    },
+                    {
+                        type: 'macd',
+                        linkedTo: 'candlestick_series',
+                        name:"macd",
+                        yAxis: 2
+                    }
+                ],
+
+
+                //提示框
+                tooltip:{
+                    //是否开启滑动
+                    followTouchMove:false,
+                    enabled:true,
+                    style:{
+                        display:"none"
+                    }
+                },
+
+                //屏蔽版权信息
+                credits:{
+                    enabled: false // 禁用版权信息
+                },
+
+                //导航器
+                navigator:{
+                    enabled:false
+                },
+
+                //滚动条
+                scrollbar:{
+                    enabled:false
+                },
+
+                //图例
+                legend:{
+                    enabled:false
+                },
+
+                //范围选择器
+                rangeSelector: {
+                    buttons: [
+                        {
+                            count: 50,
+                            type: 'minute',
+                            text: '30M'
+                        },
+                        {
+                            count: 150,
+                            type: 'minute',
+                            text: '30M'
+                        },
+                        {
+                            count: 250,
+                            type: 'minute',
+                            text: '30M'
+                        }
+                    ],
+                    selected: btnnum,
+                    buttonTheme: {
+                        // 不显示按钮
+                        display: 'none'
+                    },
+                    enabled:true,
+                    inputEnabled:false
+                }
+            });
+        }
+    </script>
+</body>
+</html>
