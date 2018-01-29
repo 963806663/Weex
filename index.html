@@ -39,9 +39,9 @@
                         </p>
                     </li>
                     <li>
-                        <p>量<span id="volume"></span></p>
+                        <p>量 <span id="volume"></span></p>
                         <p>高 <span id="highest"></span></p>
-                        <p id="zbBtn">指标</p>
+                        <p id="zbBtn"></p>
                     </li>
                 </ul>
             </div>
@@ -75,18 +75,20 @@
     </div>
     <script>
         //点击指标打开和关闭指标选项
-        $("#zbBtn").click(function(){
-            if($(".img").css("display") === "none"){
-                $(".img").css("display","flex");
-            } else{
-                $(".img").css("display","none");
-            }
-        });
+//        $("#zbBtn").click(function(){
+//            if($(".img").css("display") === "none"){
+//                $(".img").css("display","flex");
+//            } else{
+//                $(".img").css("display","none");
+//            }
+//        });
 
         //如果选择的时间
         $("#fsSel").change(function () {
             min = Number($("#fsSel").val());
             btnnum = buttons.indexof(min);
+            lastTime = 0;
+            lt_time = 0;
             market_data = [];
             transaction =[];
             getHistoryData();
@@ -142,13 +144,23 @@
         //图标的实例对象
         var chart = null;
 
+        //最后一次推送数据的时间
+        var lt_time= 0;
+
         //跟新数据
         function addition() {
             var series = chart.series[0];
             var series1 = chart.series[1];
-            series.setData(market_data);
             series1.setData(transaction);
             series.setData(market_data);
+            chart.yAxis[0].removePlotLine('plot-line-1');
+            chart.yAxis[0].addPlotLine ({
+                color:'#8a8a8a',           //线的颜色，定义为红色
+                dashStyle:'solid',     //默认值，这里定义为实线
+                value:market_data[market_data.length-1][4],              //定义在那个值上显示标示线，这里是在x轴上刻度为3的值处垂直化一条线
+                width:0.5,                //标示线的宽度，2px
+                id:"plot-line-1"
+            })
         }
 
 
@@ -395,12 +407,16 @@
                     market_data[market_data.length-1] = arr;
                     transaction[transaction.length-1] = arr2;
                 } else if(JSON.stringify(arr2) !== "{}" !== 0 && arr2.y !== 0){
-                    market_data.push(arr);
-                    transaction.push(arr2);
+                    //根据时间间隔添加图表数据数据
+                    if( lt_time === 0 || arr[0] === lt_time){
+                        market_data.push(arr);
+                        transaction.push(arr2);
+                    }
                 }
             }
             //保存上次最新数据的时间
             lastTime = market_data[market_data.length-1][0];
+            lt_time = lastTime + 60000*min;
         }
 
 
@@ -429,7 +445,6 @@
                     alignTicks: true,
                     animation:false,
                     spacing:[0, 5, 0, 5],
-                    zoomType:'xy',
                     resetZoomButton:{
                         theme:{
                             display:"none"
@@ -528,7 +543,16 @@
                         lineColor: '#404040',
                         lineWidth: 0.5,
                         //偏移
-                        offset:0
+                        offset:0,
+//                        plotBands:[
+//                            {
+//                                borderColor: "red",
+//                                borderWidth: 1,
+//                                color: '#FCFFC5',
+//                                from:11900,
+//                                to:11500
+//                            }
+//                        ]
                     },
                     {
                         top: '50%',
